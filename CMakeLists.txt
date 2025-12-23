@@ -1,12 +1,15 @@
 cmake_minimum_required(VERSION "3.31.6")
-
 project("CppPasswordManager")
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(LIBSODIUM REQUIRED libsodium)
+
+find_package(Catch2 REQUIRED)
+
+find_library(SODIUM_LIB NAMES sodium libsodium REQUIRED)
+find_path(SODIUM_INCLUDE_DIR NAMES sodium.h REQUIRED)
+
 
 add_executable("CppPasswordManager" 
     "src/main.cpp" 
@@ -16,23 +19,24 @@ add_executable("CppPasswordManager"
     "src/cli/CommandParser.cpp" 
     "src/core/Vault.cpp"
 )
+target_include_directories("CppPasswordManager" PRIVATE "src/core" "src/crypto" "src/storage" "includes" ${SODIUM_INCLUDE_DIR})
+target_link_libraries("CppPasswordManager" PRIVATE ${SODIUM_LIB})
 
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(LIBSODIUM REQUIRED libsodium)
+add_executable("test" 
+    "test/src/crypto/test_Crypto.cpp" 
+    "src/crypto/Crypto.cpp"
+)
+target_compile_definitions("test" PRIVATE SODIUM_STATIC=1)
 
-target_include_directories("CppPasswordManager" PRIVATE 
-    "src/core"
-    "src/crypto"
-    "src/storage"
-    "include"
-    "${LIBSODIUM_INCLUDE_DIRS}"
-    "${sodium_INCLUDE_DIRS}")
+target_include_directories("test" PRIVATE 
+    "src/crypto" 
+    "include" 
+    ${SODIUM_INCLUDE_DIR}
+)
 
-
-target_link_libraries("CppPasswordManager" PRIVATE ${LIBSODIUM_LIBRARIES})
-target_link_directories("CppPasswordManager" PRIVATE ${LIBSODIUM_LIBRARY_DIRS})
-
+target_link_libraries("test" PRIVATE ${SODIUM_LIB})
 
 if(MSVC)
     target_compile_options("CppPasswordManager" PRIVATE /W4)
+    target_compile_options("test" PRIVATE /W4)
 endif()
