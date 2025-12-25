@@ -89,6 +89,7 @@ void Vault::UpdateEntry(const Entry& UpdatedEntry)
 		{
 			e["username"] = UpdatedEntry.Username;
 			e["password"] = UpdatedEntry.Encrypted_Password;
+			e["nonce"] = UpdatedEntry.Nonce;
 			return;
 		}
 			

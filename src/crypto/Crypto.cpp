@@ -89,11 +89,17 @@ bool Crypto::VerifyMaster(const std::vector<unsigned char>& Sentinel, const std:
 
 	if (tDecrypted.has_value())
 	{
-		if (tDecrypted.value() == Verifier)
-		{
-			return true;
-		}
-		return false;
+		bool ok = (tDecrypted.value() == Verifier);
+
+		sodium_memzero(tDecrypted->data(), tDecrypted->size());
+		tDecrypted->clear();
+		tDecrypted->shrink_to_fit();
+
+		sodium_memzero(Verifier.data(), Verifier.size());
+		Verifier.clear();
+		Verifier.shrink_to_fit();
+
+		return ok;
 	}
 
 	throw std::runtime_error("Failed to decrypt sentinel.");

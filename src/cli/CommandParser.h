@@ -21,6 +21,10 @@ public:
 
 	static void ExecuteUpdate(Vault& CurrentVault, const std::vector<unsigned char>& Key, const std::string& Service);
 
+	static std::string ExecutePasswordGeneration(std::vector<std::string> Tokens, const int& Length);
+
+	static std::string PasswordParse(std::string Input);
+
 	static void Help();
 
 	static std::optional<Vault> RegisterSetup(const std::string& Path, const std::string& MasterPass);

@@ -1,5 +1,6 @@
 #include "Entry.h"
 #include "Crypto.h"
+#include "sodium.h"
 #include <vector>
 #include <string>
 #include <optional>
@@ -19,6 +20,7 @@ std::optional<Entry> Entry::FromStringPass(const std::string& Service, const std
 	if (TempPass.has_value())
 	{
 		std::vector<unsigned char> EnryptedPassword = TempPass.value();
+
 
 		Entry ReturnEntry(Service, Username, EnryptedPassword, Nonce);
 

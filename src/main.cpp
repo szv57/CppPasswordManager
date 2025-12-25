@@ -74,6 +74,10 @@ int main()
 
         std::vector<unsigned char> Key = Crypto::DeriveKey(MasterPassword, CurrentVault.Salt);
 
+		sodium_memzero(MasterPassword.data(), MasterPassword.size());
+		MasterPassword.clear();
+		MasterPassword.shrink_to_fit();
+
         std::cout << "\nWhat do you want to do? ";
         std::string Input;
 
@@ -121,6 +125,10 @@ int main()
         Vault CurrentVault = tCurrentVault.value();
 
         std::vector<unsigned char> Key = Crypto::DeriveKey(MasterPass, CurrentVault.Salt);
+
+        sodium_memzero(MasterPass.data(), MasterPass.size());
+        MasterPass.clear();
+        MasterPass.shrink_to_fit();
         try
         {
 			if (!Crypto::VerifyMaster(CurrentVault.Sentinel, Key, CurrentVault.SentinelNonce))
@@ -156,9 +164,12 @@ int main()
 				std::getline(std::cin, Input);
 
 				std::cout << std::endl;
+
+                Storage::SaveData(CurrentVault, Path);
 			}
             else 
             {
+                Storage::SaveData(CurrentVault, Path);
                 break;
 
             }

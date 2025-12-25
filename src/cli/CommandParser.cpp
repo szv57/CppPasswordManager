@@ -3,6 +3,8 @@
 #include "Vault.h"
 #include "Storage.h"
 #include "json.hpp"
+#include "PasswordGenerator.h"
+#include "sodium.h"
 
 #include <sstream>
 #include <iostream>
@@ -110,6 +112,7 @@ void CommandParser::ExecuteNew(Vault& CurrentVault, const std::vector<unsigned c
 	std::getline(std::cin, Username);
 
 
+
 	std::cout << "Password ";
 
 
@@ -117,13 +120,35 @@ void CommandParser::ExecuteNew(Vault& CurrentVault, const std::vector<unsigned c
 
 	std::string StringPass;
 
+
 	Nonce = Crypto::GenerateNonce();
 
+	
+
 	std::getline(std::cin, StringPass);
+
+	if (StringPass == "" || StringPass == "\n")
+	{
+		StringPass = PasswordParse("gen 16");
+	}
+	else
+	{
+		StringPass = PasswordParse(StringPass);
+	}
+
+	if (StringPass == "")
+	{
+		std::cerr << "Invalid password generation parameters. Password is auto generated. Update with keyword 'update'" << std::endl;
+		StringPass = PasswordParse("gen 20");
+	}
 
 	std::cout << std::endl;
 
 	auto tEntry = Entry::FromStringPass(Service, Username, StringPass, Nonce, Key);
+
+	sodium_memzero(StringPass.data(), StringPass.size());
+	StringPass.clear();
+	StringPass.shrink_to_fit();
 	
 	if (tEntry.has_value())
 	{
@@ -154,6 +179,10 @@ void CommandParser::ExecuteGet(Vault& CurrentVault, const std::vector<unsigned c
 			std::cout << "Service: " << ReturnedEntry.Service << std::endl;
 			std::cout << "Username: " << ReturnedEntry.Username << std::endl;
 			std::cout << "Password: " << DecryptedPassword << std::endl;
+
+			sodium_memzero(DecryptedPassword.data(), DecryptedPassword.size());
+			DecryptedPassword.clear();
+			DecryptedPassword.shrink_to_fit();
 
 			return;
 		
@@ -195,11 +224,29 @@ void CommandParser::ExecuteUpdate(Vault& CurrentVault, const std::vector<unsigne
 
 	std::getline(std::cin, Password);
 
+	if (Password == "" || Password == "\n")
+	{
+		Password = PasswordParse("gen 20");
+	}
+	else
+	{
+		Password = PasswordParse(Password);
+	}
+
+	if (Password == "")
+	{
+		std::cerr << "Invalid password generation parameters. Password is auto generated. Update with keyword 'update'" << std::endl;
+		Password = PasswordParse("gen 20");
+	}
 	std::cout << std::endl;
 
 	std::vector<unsigned char> Nonce = Crypto::GenerateNonce();
 
 	auto tEntry = Entry::FromStringPass(Service, Username, Password, Nonce, Key);
+
+	sodium_memzero(Password.data(), Password.size());
+	Password.clear();
+	Password.shrink_to_fit();
 
 	if (tEntry.has_value())
 	{
@@ -211,6 +258,83 @@ void CommandParser::ExecuteUpdate(Vault& CurrentVault, const std::vector<unsigne
 	std::cerr << "Failed to update entry" << std::endl;
 	
 
+}
+
+std::string CommandParser::ExecutePasswordGeneration(std::vector<std::string> Tokens, const int& Length)
+{
+	GeneratorSettings Settings;
+	Settings.Upper = true;
+	Settings.Lower = true;
+	Settings.Digit = true;
+	Settings.Symbol = true;
+
+	for (auto& Token : Tokens)
+	{
+		if (Token == "symbol")
+		{
+			Settings.Symbol = false;
+		}
+		if (Token == "digit")
+		{
+			Settings.Digit = false;
+		}
+		if (Token == "upper")
+		{
+			Settings.Upper = false;
+		}
+		if (Token == "lower")
+		{
+			Settings.Lower = false;
+		}
+	}
+	std::string Generated = PasswordGenerator::GeneratePass(Length, Settings);
+
+	return Generated;
+}
+
+std::string CommandParser::PasswordParse(std::string Input)
+{
+	std::vector<std::string> Tokens = TokenizeCommandline(Input);
+
+	if (Tokens.size() == 1)
+	{
+		return Tokens[0];
+	}
+
+
+	if (Tokens[0] != "gen" || Tokens.size() == 3 || Tokens.size() >= 7)
+	{
+		return "";
+	}
+
+	std::stringstream SS(Tokens[1]);
+
+
+	int Length;
+
+	try
+	{
+		SS >> Length;
+	}
+	catch (const std::exception& e)
+	{
+		std::cerr << e.what() << std::endl;
+		return "";
+	}
+
+	if (Tokens.size() == 2)
+	{
+		std::string Pass = ExecutePasswordGeneration(Tokens, Length);
+		return Pass;
+	}
+
+	if (Tokens[2] != "--no")
+	{
+		return "";
+	}
+
+	std::string Pass = ExecutePasswordGeneration(Tokens, Length);
+	return Pass;
 }
 
 void CommandParser::Help()
