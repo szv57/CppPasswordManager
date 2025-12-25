@@ -19,7 +19,7 @@ add_executable("CppPasswordManager"
     "src/cli/CommandParser.cpp" 
     "src/core/Vault.cpp"
 )
-target_include_directories("CppPasswordManager" PRIVATE "src/core" "src/crypto" "src/storage" "includes" ${SODIUM_INCLUDE_DIR})
+target_include_directories("CppPasswordManager" PRIVATE "src/core" "src/crypto" "src/storage" "src/cli" "includes" ${SODIUM_INCLUDE_DIR})
 target_link_libraries("CppPasswordManager" PRIVATE ${SODIUM_LIB})
 
 add_executable("test" 

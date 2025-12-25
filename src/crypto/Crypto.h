@@ -10,7 +10,7 @@ class Crypto
 {
 public:
 
-	static std::optional<std::vector<unsigned char>> EncryptPassword(const std::string& Password, const std::vector<unsigned char> Key, const std::vector<unsigned char>& Nonce);
+	static std::optional<std::vector<unsigned char>> EncryptPassword(const std::string& Password, const std::vector<unsigned char>& Key, const std::vector<unsigned char>& Nonce);
 
 	static std::optional<std::string> DecryptPassword(const std::vector<unsigned char>& EncryptedPassword, const std::vector<unsigned char>& Key, const std::vector<unsigned char>& Nonce);
 
@@ -20,6 +20,9 @@ public:
 
 	static std::vector<unsigned char> GenerateSalt();
 
+	static std::optional<std::vector<unsigned char>> GenerateSentinel(const std::vector<unsigned char>& Key, const std::vector<unsigned char>& SentinelNonce);
+
+	static bool VerifyMaster(const std::vector<unsigned char>& Sentinel, const std::vector<unsigned char>& Key, const std::vector<unsigned char>& Nonce);
 
 protected:
 private:

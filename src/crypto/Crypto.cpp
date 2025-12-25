@@ -4,10 +4,10 @@
 #include <stdexcept>
 
 
-#define KEY_LEN crypto_box_SEEDBYTES
+#define KEY_LEN crypto_secretbox_KEYBYTES
 
 
-std::optional<std::vector<unsigned char>> Crypto::EncryptPassword(const std::string& Password, const std::vector<unsigned char> Key, const std::vector<unsigned char>& Nonce)
+std::optional<std::vector<unsigned char>> Crypto::EncryptPassword(const std::string& Password, const std::vector<unsigned char>& Key, const std::vector<unsigned char>& Nonce)
 {
 	std::vector<unsigned char> EncryptedPass(Password.size() + 16);
 
@@ -65,4 +65,38 @@ std::vector<unsigned char> Crypto::GenerateSalt()
 	return Salt;
 
 }
+
+std::optional<std::vector<unsigned char>> Crypto::GenerateSentinel(const std::vector<unsigned char>& Key, const std::vector<unsigned char>& SentinelNonce)
+{
+	std::string Pass = "verified";
+
+	auto tEncrypted = EncryptPassword(Pass, Key, SentinelNonce);
+
+	if (tEncrypted.has_value())
+	{
+		std::vector<unsigned char> EncryptedSent = tEncrypted.value();
+
+		return EncryptedSent;
+	}
+	return std::nullopt;
+}
+
+bool Crypto::VerifyMaster(const std::vector<unsigned char>& Sentinel, const std::vector<unsigned char>& Key, const std::vector<unsigned char>& Nonce)
+{
+	std::string Verifier = "verified";
+
+	auto tDecrypted = DecryptPassword(Sentinel, Key, Nonce);
+
+	if (tDecrypted.has_value())
+	{
+		if (tDecrypted.value() == Verifier)
+		{
+			return true;
+		}
+		return false;
+	}
+
+	throw std::runtime_error("Failed to decrypt sentinel.");
+}
+
 
