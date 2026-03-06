@@ -51,6 +51,7 @@ void CommandParser::ParseCommands(Vault& CurrentVault, const std::vector<unsigne
 	{
 	case 0:
 		ExecuteNew(CurrentVault, Key);
+		Storage::SaveData(CurrentVault, Path);
 		break;
 
 	case 1:
@@ -60,6 +61,7 @@ void CommandParser::ParseCommands(Vault& CurrentVault, const std::vector<unsigne
 			break;
 		}
 		ExecuteGet(CurrentVault, Key, Tokens[1]);
+		Storage::SaveData(CurrentVault, Path);
 		break;
 
 	case 2:
@@ -69,6 +71,7 @@ void CommandParser::ParseCommands(Vault& CurrentVault, const std::vector<unsigne
 			break;
 		}
 		ExecuteDelete(CurrentVault, Tokens[1]);
+		Storage::SaveData(CurrentVault, Path);
 		break;
 	case 3:
 		if (Tokens.size() != 2)
@@ -77,6 +80,7 @@ void CommandParser::ParseCommands(Vault& CurrentVault, const std::vector<unsigne
 			break;
 		}
 		ExecuteUpdate(CurrentVault, Key, Tokens[1]);
+		Storage::SaveData(CurrentVault, Path);
 		break;
 
 	case 4:
@@ -100,20 +104,23 @@ void CommandParser::ExecuteNew(Vault& CurrentVault, const std::vector<unsigned c
 	std::cout << "Service: ";
 	std::string Service;
 
-	std::cout << std::endl;
-
 	std::getline(std::cin, Service);
+
+	for (auto& c : Service)
+	{
+		c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+	}
+
+	std::cout << std::endl;
 
 	std::cout << "Username: ";
 	std::string Username;
 
-	std::cout << std::endl;
-
 	std::getline(std::cin, Username);
 
+	std::cout << std::endl;
 
-
-	std::cout << "Password ";
+	std::cout << "Password: ";
 
 
 	std::vector<unsigned char> Nonce;
@@ -202,7 +209,7 @@ void CommandParser::ExecuteDelete(Vault& CurrentVault, const std::string& Servic
 	{
 		CurrentVault.DeleteEntry(Service);
 
-		std::cout << "\n" << Service << "successfully deleted" << std::endl;
+		std::cout << "\n" << Service << " successfully deleted\n" << std::endl;
 	}
 	catch (const std::invalid_argument& e)
 	{
@@ -270,6 +277,30 @@ std::string CommandParser::ExecutePasswordGeneration(std::vector<std::string> To
 
 	for (auto& Token : Tokens)
 	{
+
+		if (Token != "get" && Token != "--no" && Token != "symbol" && Token != "digit" && Token != "lower" && Token != "upper")
+		{
+			int Count = 0;
+			for (int i = 0; i < Token.length(); i++)
+			{
+				if (std::isdigit(Token[i]))
+				{
+					Count++;
+				}
+			}
+			if (Count == Token.length())
+			{
+				Settings.Upper = true;
+				Settings.Lower = true;
+				Settings.Digit = true;
+				Settings.Symbol = true;
+
+				std::string Generated = PasswordGenerator::GeneratePass(20, Settings);
+
+				return Generated;
+			}
+		}
+
 		if (Token == "symbol")
 		{
 			Settings.Symbol = false;
@@ -346,6 +377,10 @@ void CommandParser::Help()
 	std::cout << "update <service>: Update entry by service." << std::endl;
 	std::cout << "help: Show help." << std::endl;
 	std::cout << "exit: Exit program.\n" << std::endl;
+
+	std::cout << "PASSWORD GENERATOR" << std::endl;
+	std::cout << "!!When setting an entry's password type!!" << std::endl;
+	std::cout << "gen <length> {OPTIONAL>} --no <symbol | digit | upper | lower>\n" << std::endl;
 }
 
 std::optional<Vault> CommandParser::RegisterSetup(const std::string& Path, const std::string& MasterPass)

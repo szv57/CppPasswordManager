@@ -92,14 +92,17 @@ int main()
             {
                 CommandParser::ParseCommands(CurrentVault, Key, Input, Path);
 
-                std::cout << "\nWhat do you want to do? ";
+				std::cout << "\nWhat do you want to do? " << std::endl;
+				std::cout << "> ";
 
                 std::getline(std::cin, Input);
 
                 std::cout << std::endl;
+
             }
             else
             {
+                Storage::SaveData(CurrentVault, Path);
                 break;
             }
             
@@ -155,17 +158,21 @@ int main()
 
 		while (true)
 		{
+            for (auto& c : Input)
+            {
+                c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+            }
 			if (Input != "" && Input != "exit")
 			{
 				CommandParser::ParseCommands(CurrentVault, Key, Input, Path);
 
-				std::cout << "\nWhat do you want to do? ";
+				std::cout << "\nWhat do you want to do? " << std::endl;
+                std::cout << "> ";
+
 
 				std::getline(std::cin, Input);
 
 				std::cout << std::endl;
-
-                Storage::SaveData(CurrentVault, Path);
 			}
             else 
             {
